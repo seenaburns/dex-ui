@@ -3,11 +3,13 @@
 
 void ofApp::setup() {
   ofSetWindowTitle("DEX UI");
-  ofBackground(0,0,0);
+  ofBackground(COLOR_15);
 
   ofSetFrameRate(60);
 
   layout = Layout();
+  
+  // Position components, set delays for animation
   left = Left();
   left.setPos(165,165);
   left.setDelay(-50);
@@ -22,43 +24,43 @@ void ofApp::setup() {
   keyboard.setPos(39*GRID_SIZE, 53*GRID_SIZE);
   keyboard.setDelay(-100);
 
-  show_ref = false;
-  show_scanner = false;
-  show_bg = true;
+  // Other
+  // isDrawing controls components, essentially play/pause
+  isDrawing = true;
 
-  recording = false;
-  record_counter = 0;
+  // recording variables to handle saving animation frame by frame
+  isRecording = false;
+  recordFrameCounter = 0;
+  recordMaxFrames = 1; //60*5;
 
-  drawing = true;
 }
 
 void ofApp::update() {
-  if (recording) {
+  if (isRecording) {
     ofSaveFrame();
-    record_counter++;
+    recordFrameCounter++;
 
-    if (record_counter >= 60*5) {
-      recording = false;
-      record_counter = 0;
+    if (recordFrameCounter >= recordMaxFrames) {
+      isRecording = false;
+      recordFrameCounter = 0;
     }
   }
 }
 
 void ofApp::draw() {
-//  ofGetCurrentRenderer()->setupScreenOrtho(ofGetWidth(), ofGetHeight(),-1000,1000);
   ofPushMatrix();
   {
     // translate for osx development (smaller windows)
     // use translate to keep all other coordinates accurate when untranslated
+    // note: some elements don't work with translate because they are positioned
+    // with ofEasyCamera to deal with perspective differences
     ofTranslate(X_OFFSET, Y_OFFSET);
 
-    if (show_bg)
-      layout.drawBG();
-    if (show_ref)
-      layout.drawReferenceImage(150);
+    layout.drawBG();
     layout.drawGrid(30);
 
-    if (drawing) {
+    // Draw and update components
+    if (isDrawing) {
       left.draw();
       right.draw();
       term.draw();
@@ -67,31 +69,21 @@ void ofApp::draw() {
   }
   ofPopMatrix();
 
-  if (show_scanner)
-    layout.drawScannerlines();
-
+  // Framerate
   ofSetColor(255);
-  ofPoint p = ofPoint(ofGetMouseX(), ofGetMouseY());
-  //ofDrawBitmapString(ofToString(ofGetFrameRate()), 10,10);
-//  ofDrawBitmapString(ofToString(p),10,10);
-//  ofRect(p,2,2);
+  ofDrawBitmapString(ofToString(ofGetFrameRate()), 10,10);
 }
 
 void ofApp::keyPressed(int key) {
-  /*if (key == 'r')
-    show_ref = !show_ref;
-  if (key == 's')
-    show_scanner = !show_scanner;
-  if (key == 'b')
-    show_bg = !show_bg;
   if (key == '.') {
-    recording = !recording;
-    cout << "recording: " << recording << endl;
+    isRecording = !isRecording;
+    cout << "recording: " << isRecording << endl;
   }
-  */
+  
   if (key == '=')
-    drawing = !drawing;
+    isDrawing = !isDrawing;
 }
+
 void ofApp::keyReleased(int key) { }
 void ofApp::mouseMoved(int x, int y ) { }
 void ofApp::mouseDragged(int x, int y, int button) { }
