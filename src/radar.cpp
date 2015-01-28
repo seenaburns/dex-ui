@@ -23,11 +23,11 @@ Radar::Radar() {
   thetaStep = 6.28/point_count;
   index_update_rate = thetaStep / thetaRate;
   
-  radialSplineShader.setGeometryInputType(GL_LINE);
+  radialSplineShader.setGeometryInputType(GL_LINES);
 	radialSplineShader.setGeometryOutputType(GL_TRIANGLE_STRIP);
 	radialSplineShader.setGeometryOutputCount(4);
   radialSplineShader.load("shadersGL3/lines.vert", "shadersGL3/radialFade.frag", "shadersGL3/lines.geom");
-  axisShader.setGeometryInputType(GL_LINE);
+  axisShader.setGeometryInputType(GL_LINES);
 	axisShader.setGeometryOutputType(GL_TRIANGLE_STRIP);
 	axisShader.setGeometryOutputCount(4);
   axisShader.load("shadersGL3/lines.vert", "shadersGL3/null.frag", "shadersGL3/lines.geom");
