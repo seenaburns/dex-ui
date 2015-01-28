@@ -1,0 +1,268 @@
+diff --git a/messages.c b/messages.c
+index d859a3f..8b3d3d1 100644
+--- a/messages.c
++++ b/messages.c
+@@ -218,6 +218,13 @@ int cmd_window(char **args, int num)
+ 				set_sticky(trg.monitor, trg.desktop, trg.node, (a == ALTER_SET ? b : !trg.node->client->sticky));
+ 			} else if (streq("private", key)) {
+ 				set_private(trg.monitor, trg.desktop, trg.node, (a == ALTER_SET ? b : !trg.node->client->private));
++      } else if (streq("power", key)) {
++        fprintf(stderr, "SETTING POWER MODE ON\n");
++        set_power(trg.monitor, trg.desktop, trg.node, true);
++				set_sticky(trg.monitor, trg.desktop, trg.node, true);
++        set_locked(trg.monitor, trg.desktop, trg.node, true);
++				dirty = true;
++        // set_power(trg.monitor, trg.desktop, trg.node, true);
+ 			} else {
+ 				return MSG_FAILURE;
+ 			}
+diff --git a/pointer.c b/pointer.c
+index 0f4fbf9..42b2925 100644
+--- a/pointer.c
++++ b/pointer.c
+@@ -56,6 +56,7 @@ void grab_pointer(pointer_action_t pac)
+ 
+ 		switch (pac)  {
+ 			case ACTION_FOCUS:
++			  fprintf(stderr, "Focus pointers %p\n", (void *)loc.node);
+ 				if (loc.node != mon->desk->focus) {
+ 					bool backup = pointer_follows_monitor;
+ 					pointer_follows_monitor = false;
+diff --git a/query.c b/query.c
+index 6aba083..09b8b5c 100644
+--- a/query.c
++++ b/query.c
+@@ -317,6 +317,7 @@ bool locate_window(xcb_window_t win, coordinates_t *loc)
+ 		for (desktop_t *d = m->desk_head; d != NULL; d = d->next)
+ 			for (node_t *n = first_extrema(d->root); n != NULL; n = next_leaf(n, d->root))
+ 				if (n->client->window == win) {
++				//if (n->client->window == win && !n->client->power) {
+ 					loc->monitor = m;
+ 					loc->desktop = d;
+ 					loc->node = n;
+diff --git a/stack.c b/stack.c
+index 31397b2..8afe24b 100644
+--- a/stack.c
++++ b/stack.c
+@@ -37,6 +37,7 @@ stacking_list_t *make_stack(node_t *n)
+ 
+ void stack_insert_after(stacking_list_t *a, node_t *n)
+ {
++  fprintf(stderr, "Stack insert after %p, %p\n", (void *)a, (void *)n);
+ 	stacking_list_t *s = make_stack(n);
+ 	if (a == NULL) {
+ 		stack_head = stack_tail = s;
+@@ -53,16 +54,26 @@ void stack_insert_after(stacking_list_t *a, node_t *n)
+ 		if (stack_tail == a)
+ 			stack_tail = s;
+ 	}
++	fprintf(stderr, "stack_insert_after done\n");
+ }
+ 
+ void stack_insert_before(stacking_list_t *a, node_t *n)
+ {
++  if ( a != NULL)
++    fprintf(stderr, "Stack insert before %p:%d, %p:%d\n", (void *)a, a->node->client->power, (void *)n, n->client->power);
++  else
++    fprintf(stderr, "Stack insert before NULL, %p %p\n", (void *)a, (void *)n);
+ 	stacking_list_t *s = make_stack(n);
+ 	if (a == NULL) {
+ 		stack_head = stack_tail = s;
+ 	} else {
+ 		if (a->node == n)
+ 			return;
++		/*if (a->node->client->power) {
++		  fprintf(stderr, "  stack after next\n");
++		  stack_insert_before(a->next, n);
++		  return;
++    }*/
+ 		remove_stack_node(n);
+ 		stacking_list_t *b = a->prev;
+ 		if (b != NULL)
+@@ -73,6 +84,7 @@ void stack_insert_before(stacking_list_t *a, node_t *n)
+ 		if (stack_head == a)
+ 			stack_head = s;
+ 	}
++	fprintf(stderr, "stack_insert_before done\n");
+ }
+ 
+ void remove_stack(stacking_list_t *s)
+@@ -104,14 +116,20 @@ void remove_stack_node(node_t *n)
+ void stack(node_t *n, stack_flavor_t f)
+ {
+ 	PRINTF("stack %X\n", n->client->window);
++  fprintf(stderr, "stack power mode %p\n", (void *)n);
+ 
+-	if (stack_head == NULL) {
++	if (stack_head == NULL && !n->client->power) {
++	  fprintf(stderr, "stack_head null\n");
+ 		stack_insert_after(NULL, n);
++  } else if (n->client->power) {
++    fprintf(stderr, "stack POWER NODE %p before head\n", (void *)n);
++    stack_insert_before(stack_head, n);
++    window_lower(n->client->window);
+ 	} else if (n->client->fullscreen) {
+ 		if (f == STACK_ABOVE) {
+ 			stack_insert_after(stack_tail, n);
+ 			window_raise(n->client->window);
+-		}
++    }
+ 	} else {
+ 		if (f == STACK_ABOVE && n->client->floating && !auto_raise)
+ 			return;
+@@ -120,6 +138,9 @@ void stack(node_t *n, stack_flavor_t f)
+ 		stacking_list_t *oldest_fullscreen = NULL;
+ 		for (stacking_list_t *s = (f == STACK_ABOVE ? stack_tail : stack_head); s != NULL; s = (f == STACK_ABOVE ? s->prev : s->next)) {
+ 			if (s->node != n) {
++		    if (s->node->client->power)
++		      continue;
++
+ 				if (s->node->client->fullscreen) {
+ 					if (oldest_fullscreen == NULL)
+ 						oldest_fullscreen = s;
+@@ -161,4 +182,18 @@ void stack(node_t *n, stack_flavor_t f)
+ 			}
+ 		}
+ 	}
++
++  stacking_list_t *s = stack_head;
++  stacking_list_t *b = stack_head;
++  while(s != NULL) {
++    b = s->next;
++	  fprintf(stderr, "Restack power loop\n");
++	  if (s->node->client->power && stack_head != s) {
++	    fprintf(stderr, "- window lower power to before stack_head %X", s->node->client->window);
++	    window_below(s->node->client->window, stack_head->node->client->window);
++	    fprintf(stderr, "- move power to before stack_head %X", s->node->client->window);
++	    stack_insert_before(stack_head, s->node);
++    }
++    s = b;
++  }
+ }
+diff --git a/tree.c b/tree.c
+index 82786d0..590bb0d 100644
+--- a/tree.c
++++ b/tree.c
+@@ -284,6 +284,9 @@ void pseudo_focus(monitor_t *m, desktop_t *d, node_t *n)
+ 
+ void focus_node(monitor_t *m, desktop_t *d, node_t *n)
+ {
++  // if (n != NULL && n->client->power)
++  //   n = NULL;
++
+ 	if (mon->desk != d || n == NULL)
+ 		clear_input_focus();
+ 
+@@ -297,6 +300,7 @@ void focus_node(monitor_t *m, desktop_t *d, node_t *n)
+ 			a = b;
+ 		}
+ 		sticky_still = true;
++		//if (n == NULL && d->focus != NULL && !d->focus->client->power)
+ 		if (n == NULL && d->focus != NULL)
+ 			n = d->focus;
+ 	}
+@@ -388,6 +392,7 @@ client_t *make_client(xcb_window_t win, unsigned int border_width)
+ 	c->border_width = border_width;
+ 	c->pseudo_tiled = c->floating = c->fullscreen = false;
+ 	c->locked = c->sticky = c->urgent = c->private = c->icccm_focus = false;
++	c->power = false;
+ 	xcb_icccm_get_wm_protocols_reply_t protocols;
+ 	if (xcb_icccm_get_wm_protocols_reply(dpy, xcb_icccm_get_wm_protocols(dpy, win, ewmh->WM_PROTOCOLS), &protocols, NULL) == 1) {
+ 		if (has_proto(WM_TAKE_FOCUS, &protocols))
+diff --git a/types.h b/types.h
+index fb7494a..220c6f8 100644
+--- a/types.h
++++ b/types.h
+@@ -159,6 +159,7 @@ typedef struct {
+ 	bool sticky;
+ 	bool urgent;
+ 	bool private;
++	bool power;
+ 	bool icccm_focus;
+ 	xcb_rectangle_t floating_rectangle;
+ 	xcb_rectangle_t tiled_rectangle;
+diff --git a/window.c b/window.c
+index 253e80d..3566e93 100644
+--- a/window.c
++++ b/window.c
+@@ -373,7 +373,7 @@ void window_kill(monitor_t *m, desktop_t *d, node_t *n)
+ 
+ void set_fullscreen(node_t *n, bool value)
+ {
+-	if (n == NULL || n->client->fullscreen == value)
++	if (n == NULL || (n->client->power == true && value == false) || n->client->fullscreen == value)
+ 		return;
+ 
+ 	client_t *c = n->client;
+@@ -388,6 +388,51 @@ void set_fullscreen(node_t *n, bool value)
+ 	stack(n, STACK_ABOVE);
+ }
+ 
++void set_power(monitor_t *m, desktop_t *d, node_t *n, bool value)
++{
++	if (n == NULL || n->client->power == value)
++		return;
++
++	client_t *c = n->client;
++
++	PRINTF("power %X: %s\n", c->window, BOOLSTR(value));
++
++	c->power = value;
++	// c->fullscreen = value;
++	
++	n->split_mode = MODE_AUTOMATIC;
++	c->floating = n->vacant = value;
++	update_vacant_state(n->parent);
++
++	if (value) {
++		enable_floating_atom(c->window);
++		unrotate_brother(n);
++	} else {
++		disable_floating_atom(c->window);
++		rotate_brother(n);
++	}
++	
++	// No borders
++	n->client->border_width = 0;
++
++  // Move
++  fprintf(stderr, "move power %d, %d, %d, %d\n", m->rectangle.x, m->rectangle.y, m->rectangle.width, m->rectangle.height);
++  window_move(c->window, m->rectangle.x, m->rectangle.y);
++  window_resize(c->window, m->rectangle.width, m->rectangle.height);
++  c->floating_rectangle = m->rectangle;
++
++  // Unfocus, select another node on desktop if possible
++  d->focus = NULL;
++  m->desk->focus = NULL;
++  ewmh_update_active_window();
++  clear_input_focus();
++  focus_node(m, d, NULL);
++
++  // Send to bottom
++	fprintf(stderr, "power %X: %s %d\n", c->window, BOOLSTR(value), n->client->power);
++	stack(n, STACK_BELOW);
++}
++
+ void set_pseudo_tiled(node_t *n, bool value)
+ {
+ 	if (n == NULL || n->client->pseudo_tiled == value)
+@@ -614,6 +659,7 @@ void window_border_width(xcb_window_t win, uint32_t bw)
+ void window_move(xcb_window_t win, int16_t x, int16_t y)
+ {
+ 	uint32_t values[] = {x, y};
++	fprintf(stderr, "move window %d, %d", x, y);
+ 	xcb_configure_window(dpy, win, XCB_CONFIG_WINDOW_X_Y, values);
+ }
+ 
+diff --git a/window.h b/window.h
+index 9cf4eef..2414f5b 100644
+--- a/window.h
++++ b/window.h
+@@ -43,6 +43,7 @@ void adopt_orphans(void);
+ void window_close(node_t *n);
+ void window_kill(monitor_t *m, desktop_t *d, node_t *n);
+ void set_fullscreen(node_t *n, bool value);
++void set_power(monitor_t *m, desktop_t *d, node_t *n, bool value);
+ void set_pseudo_tiled(node_t *n, bool value);
+ void set_floating(node_t *n, bool value);
+ void set_locked(monitor_t *m, desktop_t *d, node_t *n, bool value);
