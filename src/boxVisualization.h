@@ -2,7 +2,8 @@
  
  boxVisualization.h
  
- Box visualization in the style of tron, on left side below time display
+ Box/Waves visualization, in the style of Tron boardroom
+ Is dependent on absolute positioning because of waves
  
  */
 
@@ -20,7 +21,6 @@ public:
   void draw();
   
   void setPos(float x_, float y_);
-  void setDelay(float delay_);
   
   float x;
   float y;
@@ -28,14 +28,11 @@ public:
   float h;
   
   Waves waves;
-  void initializeAnimatedItems();
-private:
-  Text font5;
   
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
+private:
   AnimatedTickLine tline1;
   AnimatedTickLine tline2;
   vector<AnimatedText> texts;
-  float delay;
-  
-  void initializeText();
 };

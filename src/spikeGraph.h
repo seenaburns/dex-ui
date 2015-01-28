@@ -22,8 +22,9 @@ public:
   
   float x,y,w,h;
   float spikeWidth;
-  float absx;
-  void initializeAnimatedItems();
+  
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
   int scounter;
   float speed;
@@ -42,8 +43,5 @@ private:
   AnimatedTickLine tline2;
   vector<AnimatedText> texts;
   
-  Text font5;
-  
   void boxIntro();
-  void initializeTexts();
 };

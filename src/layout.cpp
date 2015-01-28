@@ -3,8 +3,7 @@
 
 Layout::Layout() {
   // Create grid mesh
-  
-  
+  // Use mesh over series of rectangles for performance
   gridAlpha = 255;
   gridCount = 0;
   gridMesh.setMode(OF_PRIMITIVE_POINTS);
@@ -19,19 +18,13 @@ Layout::Layout() {
   }
   
   refImg.loadImage(_REF_IMAGE);
-  
-  noiseBG.loadImage("images/noise-bg-color-darker.png");
-  
-  scannerShader.load("shadersGL3/scannerlines");
+  noiseBG.loadImage(NOISE_BG);
 }
 
 void Layout::drawGrid(int alpha) {
   if (alpha != gridAlpha)
     updateGridAlpha(alpha);
   gridMesh.draw();
-}
-
-void Layout::drawColumns(int alpha) {
 }
 
 void Layout::drawReferenceImage(int alpha) {
@@ -42,14 +35,6 @@ void Layout::drawReferenceImage(int alpha) {
 void Layout::drawBG() {
   ofSetColor(255,255,255,255);
   noiseBG.draw(0,0);
-}
-
-void Layout::drawScannerlines() {
-  scannerShader.begin();
-  ofFill();
-  ofSetColor(0, 0, 0, 255);
-  ofRect(0, 0, WIDTH, HEIGHT);
-  scannerShader.end();
 }
 
 void Layout::updateGridAlpha(int alpha) {

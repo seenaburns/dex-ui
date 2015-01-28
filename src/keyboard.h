@@ -16,6 +16,7 @@ public:
   void update();
   void draw();
   void press(int pressedKeyCode);
+  void setDelay(int delay_);
   
   ofTrueTypeFont font;
   float x, y, w, h;
@@ -59,6 +60,8 @@ public:
   void toggleDebug();
   void initializeAnimatedItems();
   void press(int pressedKeyCode);
+  
+  void updateDependencyDelays(int delay_);
 private:
   vector<Key> keys;
   
@@ -87,7 +90,8 @@ public:
   void draw();
   void toggleDebug();
   float x, y, w, h;
-  void initializeAnimatedItems();
+
+  void updateDependencyDelays(int delay_);
 private:
   KeyRow kr1;
   KeyRow kr2;

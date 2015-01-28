@@ -16,13 +16,17 @@ SpikeGraph::SpikeGraph() {
   
   maskShader.load("shadersGL3/null.vert","shadersGL3/spike.frag");
   
-  font5 = Text();
-  font5.setFont(MAIN_FONT, 5);
+  tline1 = newTickLine(0, 0, w, 40, 0, COLOR_LINE);
+  tline2 = newTickLine(0, h+30, w, 40, 0, COLOR_LINE);
   
-  initAnimated();
-  newEvent(0, 300, 0, true); // intro
-  newEvent(300, -1, 1, false); // main
-  initializeAnimatedItems();
+  // Animation settings
+  events.clear();
+  newEvent(0, 300, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
+  currentEvent = events[0];
+  
+  updateDependencyEvents();
+  updateDependencyDelays(getDelay());
 }
 
 void SpikeGraph::setPos(float x_, float y_) {
@@ -31,7 +35,7 @@ void SpikeGraph::setPos(float x_, float y_) {
 }
 
 void SpikeGraph::update() {
-  if (getTime() > 100) {
+  if (currentEvent.id != 0 || getTime() > 100) {
     updateSpikePositions();
     
     // Create new spikes
@@ -64,62 +68,47 @@ void SpikeGraph::draw() {
       
     for (int i = 0; i < texts.size(); i++)
       texts[i].draw();
-    
-    if (getCurrentEventID() == 0) {
+   
+    // Draw box
+    if (currentEvent.id == 0) {
       // Intro
       boxIntro();
-      
-      float maskW = easeOut(getTime()-120, w, 0, 50);
-      ofTranslate(0, 15);
-      maskShader.begin();
-      maskShader.setUniform1f("abspos", 1515+maskW);
-//      maskShader.setUniform1f("abspos", 60+240+maskW);
-      maskShader.setUniform1f("size", w-maskW);
-      ofNoFill();
-      ofSetColor(COLOR_95);
-      ofBeginShape();
-      for (int i = 0; i < spikesUp.size(); i++)
-        drawSpike(spikesUp[i]);
-      ofEndShape();
-      ofBeginShape();
-      for (int i = 0; i < spikesDown.size(); i++)
-        drawSpike(spikesDown[i]);
-      ofEndShape();
-      maskShader.end();
-    } else if (getCurrentEventID() == 1) {
-      // Main
-      /*ofSetColor(COLOR_LINE);
-      tick_line(0, w, 0);
-      tick_line(0, w, h+30);
-      
-      ofSetColor(COLOR_135);
-      font5.drawString("NETWORK INSPECTOR", 5, 7);
-      
-      */
-      ofTranslate(0, 15);
-      
+    } else {
       ofNoFill();
       ofSetColor(COLOR_LINE,100);
       for (float i = 0.5; i <= w+0.5; i+=15)
-        ofLine(i,0,i,h);
+        ofLine(i,15,i,h+15);
       for (float i = 0.5; i <= h+0.5; i+=15)
-        ofLine(0,i,w,i);
-
-      maskShader.begin();
-      maskShader.setUniform1f("abspos", 1515);
-      maskShader.setUniform1f("size", w);
-      ofNoFill();
-      ofSetColor(COLOR_95);
-      ofBeginShape();
-      for (int i = 0; i < spikesUp.size(); i++)
-        drawSpike(spikesUp[i]);
-      ofEndShape();
-      ofBeginShape();
-      for (int i = 0; i < spikesDown.size(); i++)
-        drawSpike(spikesDown[i]);
-      ofEndShape();
-      maskShader.end();
+        ofLine(0,i+15,w,i+15);
     }
+    
+    // Draw spikes
+    ofTranslate(0, 15);
+    maskShader.begin();
+    float absx = 1515;
+    
+    // Sweep mask from right to left on intro
+    if (currentEvent.id == 0) {
+      float maskW = easeOut(getTime()-120, w, 0, 50);
+      maskShader.setUniform1f("abspos", absx+maskW);
+      maskShader.setUniform1f("size", w-maskW);
+    } else {
+      maskShader.begin();
+      maskShader.setUniform1f("abspos", absx);
+      maskShader.setUniform1f("size", w);
+    }
+    
+    ofNoFill();
+    ofSetColor(COLOR_95);
+    ofBeginShape();
+    for (int i = 0; i < spikesUp.size(); i++)
+      drawSpike(spikesUp[i]);
+    ofEndShape();
+    ofBeginShape();
+    for (int i = 0; i < spikesDown.size(); i++)
+      drawSpike(spikesDown[i]);
+    ofEndShape();
+    maskShader.end();
   }
   ofPopMatrix();
 }
@@ -134,17 +123,14 @@ void SpikeGraph::drawSpike(spike s) {
   float c2y = ybase+s.height*0.3*s.direction;
   float c1x = spikeWidth*0.1;
   float c2x = spikeWidth*0.05;
-//  ofBeginShape();
-//  {
-    ofVertex(s.x,ybase);
-    ofBezierVertex(ofPoint(s.x+spikeWidth-c1x,c1y),
-                   ofPoint(s.x+spikeWidth-c2x,c2y),
-                   ofPoint(s.x+spikeWidth,ybase+s.height*s.direction));
-    ofBezierVertex(ofPoint(s.x+spikeWidth+c2x,c2y),
-                   ofPoint(s.x+spikeWidth+c1x,c1y),
-                   ofPoint(s.x+spikeWidth*2,ybase));
-//  }
-//  ofEndShape();
+
+  ofVertex(s.x,ybase);
+  ofBezierVertex(ofPoint(s.x+spikeWidth-c1x,c1y),
+                 ofPoint(s.x+spikeWidth-c2x,c2y),
+                 ofPoint(s.x+spikeWidth,ybase+s.height*s.direction));
+  ofBezierVertex(ofPoint(s.x+spikeWidth+c2x,c2y),
+                 ofPoint(s.x+spikeWidth+c1x,c1y),
+                 ofPoint(s.x+spikeWidth*2,ybase));
 }
 
 void SpikeGraph::newSpike(float height, float dir, float x) {
@@ -186,30 +172,19 @@ void SpikeGraph::removeOldSpikes() {
   }
 }
 
-void SpikeGraph::initializeAnimatedItems() {
-  tline1 = newTickLine(0, 0, w, 40, delay, COLOR_LINE);
-  tline2 = newTickLine(0, h+30, w, 40, delay-10, COLOR_LINE);
-  tline1.setEvents(events);
-  tline2.setEvents(events);
-  initializeTexts();
+void SpikeGraph::updateDependencyDelays(int delay_) {
+  tline1.setDelay(delay_);
+  tline2.setDelay(delay_-10);
+  
+  int textDelay = -105;
+  int textDelays[2] = {0,-5};
+  for (int i = 0; i < texts.size(); i++)
+    texts[i].setDelay(delay_+textDelay+textDelays[i]);
 }
 
-void SpikeGraph::initializeTexts() {
-  texts.clear();
-  float textDelay = -105;
-  // Top Left
-  texts.push_back(newText("NETWORK SUMMARY", 5,
-                          5, 5,
-                          10, delay+textDelay,
-                          COLOR_135,
-                          false));
-  // Top Right
-  texts.push_back(newText("DOWN / UP KBPS", 5,
-                          w-5, 5,
-                          10, delay+textDelay-5,
-                          COLOR_55,
-                          true));
-  
+void SpikeGraph::updateDependencyEvents() {
+  tline1.setEvents(events);
+  tline2.setEvents(events);
   
   for (int i = 0; i < texts.size(); i++)
     texts[i].setEvents(events);

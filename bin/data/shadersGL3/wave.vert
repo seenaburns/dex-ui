@@ -1,4 +1,5 @@
 #version 150
+// shader for wave visualization in left panel
 
 // these are for the programmable pipeline system
 uniform mat4 modelViewProjectionMatrix;
@@ -18,22 +19,11 @@ out vec4 vPos;
 
 void main()
 {
-  // the sine wave travels along the x-axis (across the screen),
-  // so we use the x coordinate of each vertex for the calculation,
-  // but we displace all the vertex along the y axis (up the screen)/
-//  float displacementHeight = 100.0;
-//  float displacementX = cos(time + (position.x / 100.0)) * displacementHeight;
-//  float displacementY = sin(time + (position.y / 100.0)) * displacementHeight;
-//	
-//  vec4 modifiedPosition = modelViewProjectionMatrix * position;
-//	modifiedPosition.y += displacementY;
-//	gl_Position = modifiedPosition;
-  
   // get the position of the vertex relative to the modelViewProjectionMatrix
   vec4 modifiedPosition = modelViewProjectionMatrix * position;
   
   // we need to scale up the values we get from the texture
-//  float scale = 200;
+  // float scale = 200;
   
   // here we get the red channel value from the texture
   // to use it as vertical displacement
@@ -41,7 +31,6 @@ void main()
   
   // use the displacement we created from the texture data
   // to modify the vertex position
-//  modifiedPosition.y += displacementY * 100;
   // use old_scale if x > updatePosition
   modifiedPosition.y += (displacementY * scale[0] - scale[0]/2) * step(updatePosition, texcoord.x);
   // use new_scale if x < update position
@@ -54,5 +43,4 @@ void main()
   texCoordVarying = texcoord;
   
   vPos = position;
-
 }

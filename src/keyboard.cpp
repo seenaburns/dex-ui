@@ -12,7 +12,6 @@
 #include <stdio.h>
 */
 
-
 Key::Key() {
   s_xoff = 0;
   s_yoff = 0;
@@ -25,11 +24,13 @@ Key::Key() {
   setTextSize(12);
   setString("x");
   debug = false;
-
-  initAnimated();
-  newEvent(0, 200, 0, false); // intro
-  newEvent(220, -1, 1, false); // main
-  newEvent(200, 20, 2, false); // keypress
+  
+  // Animation settings
+  events.clear();
+  newEvent(0, 200, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
+  newEvent(0, 20, 2, 1); // keypress
+  currentEvent = events[0];
 }
 
 void Key::setPos(float x_, float y_) {
@@ -48,47 +49,42 @@ void Key::setTextSize(int size) {
   updateBounds();
 }
 
-void Key::update() {
-  updateTime();
-  // skip keypress
-  if (time == events[0].duration-1 && !events[getCurrentEventIndex()].loop) {
-    time = events[1].start;
-  }
+void Key::setDelay(int delay_) {
+  events[0].delay = delay_ - keynum*8 - randdelay;
+  currentEvent = events[0];
 }
 
 void Key::draw() {
-  update();
+  updateTime();
+  
   ofPushMatrix();
   {
     ofTranslate(x,y);
     
-    if (getCurrentEventID() == 0) {
+    if (currentEvent.id == 0) {
       // Intro
-      float keydelay = keynum*8+randdelay;
-      if (getTime() > keydelay && getTime() > 0) {
-        float t = easeQuinticInOutBack(getTime()-keydelay, 0, 1, 60);
-        t *= flicker(getTime()-keydelay-5,20,5);
+      if (getTime() > 0) {
+        float t = easeQuinticInOutBack(getTime(), 0, 1, 60);
+        t *= flicker(getTime()-5,20,5);
         ofColor base = COLOR_15;
         base.lerp(KEYBOARD_COLOR,t);
         ofSetColor(base);
         font.drawString(s, s_xoff, s_yoff);
       }
-    } else if (getCurrentEventID() == 2) {
-      float pressdelay = events[2].start;
-      float fillalpha = easeInOut(time-pressdelay,255,0,20);
-      fillalpha *= flicker(time-pressdelay,6,3);
-      
+    } else if (currentEvent.id == 2) {
+      float fillalpha = easeInOut(getTime(),255,0,20);
+      fillalpha *= flicker(getTime(),6,3);
       // Draw rect
       ofFill();
       ofSetColor(KEYBOARD_COLOR, fillalpha);
       ofRectRounded(0,0,w,h,3);
       
       // Draw text
-      float textalpha = easeInOut(time-pressdelay,0,150,20);
-      ofSetColor(KEYBOARD_COLOR, textalpha);
+//      float textalpha = easeInOut(getTime(),0,150,20);
+//      ofSetColor(KEYBOARD_COLOR, textalpha);
       font.drawString(s, s_xoff, s_yoff);
       
-    } else if (getCurrentEventID() == 1) {
+    } else if (currentEvent.id == 1) {
       ofSetColor(KEYBOARD_COLOR);
       font.drawString(s, s_xoff, s_yoff);
       
@@ -103,8 +99,10 @@ void Key::draw() {
 void Key::press(int pressedKeyCode) {
   if (pressedKeyCode != keycode)
     return;
-  if (getCurrentEventID() != 0)
-    time = events[2].start;
+  if (currentEvent.id != 0) {
+    currentEvent = events[2];
+    time = 0;
+  }
 }
 
 void Key::updateBounds() {
@@ -130,10 +128,12 @@ Spacebar::Spacebar() {
   h = 23;
   r = 4;
   
-  initAnimated();
-  newEvent(0, 200, 0, false); // intro
-  newEvent(220, -1, 1, false); // main
-  newEvent(200, 20, 2, false); // keypress
+  // Animation settings
+  events.clear();
+  newEvent(0, 200, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
+  newEvent(0, 20, 2, 1); // keypress
+  currentEvent = events[0];
 }
 
 void Spacebar::setPos(float x_, float y_) {
@@ -142,10 +142,10 @@ void Spacebar::setPos(float x_, float y_) {
 }
 
 void Spacebar::draw() {
-  update();
+  updateTime();
   
   ofNoFill();
-  if (getCurrentEventID() == 0) {
+  if (currentEvent.id == 0) {
     // Intro
     float rectw = easeInOut(getTime(), 0, w, 30);
     float recth = easeInOut(getTime()-15, 0, h, 15);
@@ -155,12 +155,11 @@ void Spacebar::draw() {
     base.lerp(KEYBOARD_COLOR,t);
     ofSetColor(base);
     ofRectRounded(ofPoint(x+(w-rectw)/2,y+(h-recth)/2), rectw, recth, r, r, r, r);
-  } else if (getCurrentEventID() == 2) {
-    float pressdelay = events[2].start;
-    float fillalpha = easeInOut(time-pressdelay,255,0,20);
-    fillalpha *= flicker(time-pressdelay,6,3);
+  } else if (currentEvent.id == 2) {
+    float fillalpha = easeInOut(getTime(),255,0,20);
+    fillalpha *= flicker(getTime(),6,3);
     
-    // Draw fille
+    // Draw fill
     ofSetColor(KEYBOARD_COLOR, fillalpha);
     ofFill();
     ofRectRounded(ofPoint(x,y), w, h, r, r, r, r);
@@ -169,23 +168,17 @@ void Spacebar::draw() {
     ofSetColor(KEYBOARD_COLOR);
     ofNoFill();
     ofRectRounded(ofPoint(x,y), w, h, r, r, r, r);
-  } else if (getCurrentEventID() == 1) {
+  } else if (currentEvent.id == 1) {
     ofSetColor(KEYBOARD_COLOR);
     ofRectRounded(ofPoint(x,y), w, h, r, r, r, r);
   }
 }
 
-void Spacebar::update() {
-  updateTime();
-  // skip keypress
-  if (time == events[0].duration-1 && !events[getCurrentEventIndex()].loop) {
-    time = events[1].start;
-  }
-}
-
 void Spacebar::press() {
-  if (getCurrentEventID() != 0)
-    time = events[2].start;
+  if (currentEvent.id != 0) {
+    currentEvent = events[2];
+    time = 0;
+  }
 }
 
 //
@@ -197,9 +190,13 @@ KeyRow::KeyRow() {
   xpadding_small = 30;
   xpadding_large = 30;
   
-  initAnimated();
-  newEvent(0, 300, 0, true); // intro
-  newEvent(300, -1, 1, false); // main
+  // Animation settings
+  events.clear();
+  newEvent(0, 300, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
+  currentEvent = events[0];
+  
+  updateDependencyDelays(getDelay());
 }
 
 void KeyRow::setPos(float x_, float y_) {
@@ -214,15 +211,13 @@ void KeyRow::setKeys(string s) {
 }
 
 void KeyRow::draw() {
+  updateTime();
   ofPushMatrix();
   {
     ofTranslate(x,y);
     
-    for (int i = 0; i < keys.size(); i++) {
-      // if (ofRandom(1) < 0.01)
-        // keys[i].press();
+    for (int i = 0; i < keys.size(); i++)
       keys[i].draw();
-    }
       
     if (debug) {
       debug_draw_bounding_rect();
@@ -251,7 +246,7 @@ void KeyRow::keysFromString(string s) {
   size_t pos = 0;
   string token;
   string delimiter = "|";
-  float xoff;
+  float xoff = 0;
   int i = 0;
   while ((pos = s.find(delimiter)) != std::string::npos) {
     token = s.substr(0, pos);
@@ -260,6 +255,8 @@ void KeyRow::keysFromString(string s) {
     s.erase(0, pos + delimiter.length());
     i++;
   }
+  
+  updateDependencyDelays(getDelay());
 }
 
 void KeyRow::addKey(string s, float x_, float y_, int keynum) {
@@ -289,17 +286,16 @@ void KeyRow::debug_draw_bounding_rect() {
   ofRect(0,0,w,h);
 }
 
-void KeyRow::initializeAnimatedItems() {
-  for (int i = 0; i < keys.size(); i++) {
-    keys[i].setDelay(delay);
-//    keys[i].setEvents(events);
-  }
-}
-
 void KeyRow::press(int pressedKeyCode) {
   for (int i = 0; i < keys.size(); i++)
     keys[i].press(pressedKeyCode);
 }
+
+void KeyRow::updateDependencyDelays(int delay_) {
+  for (int i = 0; i < keys.size(); i++)
+    keys[i].setDelay(delay_);
+}
+
 
 //
 // KEYBOARD
@@ -325,10 +321,13 @@ Keyboard::Keyboard() {
   
   space.setPos(175, 190);
 
-  initAnimated();
-  newEvent(0, 200, 0, true); // intro
-  newEvent(200, -1, 1, false); // main
-  initializeAnimatedItems();
+  // Animation settings
+  events.clear();
+  newEvent(0, 200, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
+  currentEvent = events[0];
+  
+  updateDependencyDelays(getDelay());
 }
 
 void Keyboard::setPos(float x_, float y_) {
@@ -370,25 +369,16 @@ void Keyboard::draw() {
     kr3.draw();
     kr4.draw();
     space.draw();
-    // if (ofRandom(1) < 0.01)
-      // space.press();
   }
   ofPopMatrix();
 }
 
-void Keyboard::initializeAnimatedItems() {
-  kr1.setDelay(delay);
-  kr2.setDelay(delay);
-  kr3.setDelay(delay);
-  kr4.setDelay(delay);
-  space.setDelay(delay-50);
-  /*
-  kr1.setEvents(events);
-  kr2.setEvents(events);
-  kr3.setEvents(events);
-  kr4.setEvents(events);
-  space.setEvents(events);
-  */
+void Keyboard::updateDependencyDelays(int delay_) {
+  kr1.setDelay(delay_);
+  kr2.setDelay(delay_);
+  kr3.setDelay(delay_);
+  kr4.setDelay(delay_);
+  space.setDelay(delay_-50);
 }
 
 KeyDetector::KeyDetector() {

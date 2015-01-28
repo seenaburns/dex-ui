@@ -8,9 +8,6 @@ Graph::Graph() {
   w = 240;
   h = 2*GRID_SIZE;
   
-  font5 = Text();
-  font5.setFont(MAIN_FONT, 5);
-  
   show_rect1 = false;
   show_rect2 = false;
   show_rect3 = false;
@@ -29,15 +26,39 @@ Graph::Graph() {
   delay = 0;
   introLinesDur = ofRandom(25)+25;
   
-  initAnimated();
-  newEvent(0, 300, 0, true); // intro
-  newEvent(0, -1, 1, false); // main
+  // Init texts
+  texts.push_back(newText("", 5,
+                          0, -1,
+                          10, 0,
+                          COLOR_135,
+                          false));
+  texts.push_back(newText("L", 5,
+                          0, h-4,
+                          10, 0,
+                          COLOR_55,
+                          false));
+  texts.push_back(newText("M", 5,
+                          15, h-4,
+                          10, 0,
+                          COLOR_55,
+                          false));
+  texts.push_back(newText("H", 5,
+                          32, h-4,
+                          10, 0,
+                          COLOR_55,
+                          false));
   
-  initializeText();
+  // Animation settings
+  events.clear();
+  newEvent(0, 300, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
+  currentEvent = events[0];
+  
+  updateDependencyEvents();
+  updateDependencyDelays(getDelay());
 }
 
 void Graph::update() {
-  
   // Retest right side rects
   if ((int)t % 60 == 0) {
     show_rect1 = ofRandom(0,1) > 0.5;
@@ -45,10 +66,8 @@ void Graph::update() {
     show_rect3 = ofRandom(0,1) > 0.5;
   }
   
-  // ONLY UPDATE IF NOT INTRO
-  int index = getCurrentEventIndex();
-  animation_event_t e = events[index];
-  if (e.id != 0) {
+  // ONLY UPDATE SPLINE IF NOT INTRO
+  if (currentEvent.id != 0) {
     // Update goals every n frames
     int n = 50;
     if ((int)t % n == 0) {
@@ -69,7 +88,7 @@ void Graph::update() {
   }
   t += 1;
   
-  Animated::update();
+  updateTime();
 }
 
 void Graph::draw() {
@@ -78,10 +97,9 @@ void Graph::draw() {
   {
     ofTranslate(x, y);
     
-    int index = getCurrentEventIndex();
-    animation_event_t e = events[index];
-    if (e.id == 0) {
+    if (currentEvent.id == 0) {
       // Intro
+      // Graph top/bottom lines
       ofSetColor(COLOR_95, 100);
       float tempW = easeInOut(time+delay, 0,  w-4*GRID_SIZE, introLinesDur);
       ofLine(w-1*GRID_SIZE, 0.5, w-1*GRID_SIZE-tempW, 0.5);
@@ -96,7 +114,7 @@ void Graph::draw() {
       for (int i = 0; i < texts.size(); i++)
         texts[i].draw();
       
-      // Rects
+      // Rects on right
       int rect_w = 1;
       ofSetColor(COLOR_75);
       if ((time+delay > 100 && time+delay < 170) || (time+delay > 150 && show_rect1))
@@ -106,15 +124,18 @@ void Graph::draw() {
       if ((time+delay > 110 && time+delay < 190) || (time+delay > 170 && show_rect1))
         ofRect(w-rect_w+0.5,23,rect_w,7);
       
-    } else if (e.id == 1) {
+    } else if (currentEvent.id == 1) {
+      // Main
       // Text
       for (int i = 0; i < texts.size(); i++)
         texts[i].draw();
 
+      // Graph top/bottom lines
       ofSetColor(COLOR_95, 100);
       ofLine(3*GRID_SIZE, 0.5, w-1*GRID_SIZE, 0.5);
       ofLine(3*GRID_SIZE, h+0.5, w-1*GRID_SIZE, h+0.5);
       
+      // Rects on right
       int rect_w = 1;
       ofSetColor(COLOR_75);
       if (show_rect1)
@@ -125,6 +146,7 @@ void Graph::draw() {
         ofRect(w-rect_w+0.5,23,rect_w,7);
       
       
+      // Draw spline
       ofPushMatrix();
       {
         ofTranslate(45,15);
@@ -174,44 +196,19 @@ ofPoint Graph::intermediate_point(ofPoint p1, ofPoint p2, float distance) {
   return ofPoint((p2.x-p1.x)*distance+p1.x, (p2.y-p1.y)*distance+p1.y);
 }
 
-void Graph::setDelay(float delay_) {
-  delay = delay_;
-//  tline1.delay = delay;
-//  tline2.delay = delay-5;
-  initializeText();
-}
-
 void Graph::setName(string name_) {
-  name = name_;
-  initializeText();
+  texts[0].s = name_;
 }
 
-void Graph::initializeText() {
-  texts.clear();
-  float textDelay = -introLinesDur-5;
-  // Top Left
-  texts.push_back(newText(name, 5,
-                          0, -1,
-                          10, delay+textDelay,
-                          COLOR_135,
-                          false));
-  texts.push_back(newText("L", 5,
-                          0, h-4,
-                          10, delay+textDelay-5,
-                          COLOR_55,
-                          false));
-  texts.push_back(newText("M", 5,
-                          15, h-4,
-                          10, delay+textDelay-10,
-                          COLOR_55,
-                          false));
-  texts.push_back(newText("H", 5,
-                          32, h-4,
-                          10, delay+textDelay-10,
-                          COLOR_55,
-                          false));
+void Graph::updateDependencyDelays(int delay_) {
+  delay = delay_;
+  int textDelay = -introLinesDur-5;
+  int textDelays[4] = {0,-5,-10,-10};
+  for (int i = 0; i < texts.size(); i++)
+    texts[i].setDelay(delay_+textDelay+textDelays[i]);
+}
 
+void Graph::updateDependencyEvents() {
   for (int i = 0; i < texts.size(); i++)
     texts[i].setEvents(events);
 }
-

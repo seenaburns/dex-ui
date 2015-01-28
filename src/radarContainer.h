@@ -27,7 +27,9 @@ public:
   ofPoint abs_p;
   
   void setPos(float x_, float y_);
-  void initializeAnimatedItems();
+  
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
   Radar radar1;
   Radar radar2;
@@ -37,8 +39,5 @@ private:
   AnimatedTickLine tline2;
   vector<AnimatedText> texts;
 
-  Text font5;
-  
   void boxIntro();
-  void initializeTexts();
 };

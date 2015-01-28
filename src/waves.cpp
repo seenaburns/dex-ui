@@ -3,6 +3,10 @@
  waves.h
 
  Perlin waves visualization
+ Uses a 2d texture generated from perlin noise to displace a mesh/plane
+ Most of the work happens in the wave.frag/wave.vert shaders
+ For placement, relies on using easyCam and changing the viewport location
+   to deal with perspective issues
  
 */
 #include "waves.h"

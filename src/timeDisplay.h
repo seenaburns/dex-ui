@@ -2,7 +2,7 @@
  
  timeDisplay.h
  
- Clock and system uptime-esque stuff on the left side info bar
+ Clock and system uptime-esque stuff on the left panel
  
  */
 
@@ -23,7 +23,6 @@ public:
   void draw();
   
   void setPos(float x_, float y_);
-  void setDelay(float delay_);
   
   float x;
   float y;
@@ -32,11 +31,9 @@ public:
   
   int t;
   
-  void initializeAnimatedItems();
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
-  Text font36;
-  Text font7;
-  
   time_t currentTime;
   struct tm *localizedTime;
   
@@ -48,16 +45,14 @@ private:
   string hour_s;
   char* mon_s;
   string year_s;
-//  char* uptime_s;
   string uptime_s;
   
-  float delay;
+  int upperTextDelay;
+  int lowerTextDelay;
   AnimatedTickLine tline1;
   AnimatedTickLine tline2;
   AnimatedTickLine tline3;
   AnimatedText mainTime;
-  vector<AnimatedText> upperText;
-  vector<AnimatedText> lowerText;
-  
-  void initializeText();
+  vector<AnimatedText> upperTexts;
+  vector<AnimatedText> lowerTexts;
 };

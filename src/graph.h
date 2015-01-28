@@ -3,6 +3,8 @@
  graph.h
  
  Simple spline graph visualization
+ Used for displaying core's performance on left panel
+ Has implementation of b-spline from aframes
  
  */
 
@@ -20,7 +22,6 @@ public:
   void draw();
   
   void setPos(float x_, float y_);
-  void setDelay(float delay_);
   void setName(string name_);
   
   float x;
@@ -42,13 +43,10 @@ public:
   
   float introLinesDur;
   
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
-  Text font5;
-  string name;
-  
-  float delay;
   vector<AnimatedText> texts;
-  void initializeText();
   
   void bezier_vertex_from_aframe(ofPoint aframe_p1, ofPoint aframe_p2, ofPoint aframe_p3);
   ofPoint intermediate_point(ofPoint p1, ofPoint p2, float distance);

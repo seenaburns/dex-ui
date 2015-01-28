@@ -2,12 +2,12 @@
  
  layout.h
  
- Layout file is responsible for any utilities used as reference.
+ Layout file is responsible for any utilities used as reference. Later background
+   and grid was put in here.
+ 
  This includes:
   - grid
-  - column hints
   - reference images
- 
  */
 
 #pragma once
@@ -20,10 +20,8 @@ class Layout {
 public:
   Layout();
   void drawGrid(int alpha);
-  void drawColumns(int alpha);
   void drawReferenceImage(int alpha);
   void drawBG();
-  void drawScannerlines();
   
   int gridAlpha;
   int gridCount;
@@ -32,10 +30,6 @@ public:
   
   // BG
   ofImage noiseBG;
-  
-  // Scannerlines
-  ofShader scannerShader;
-  
 private:
   void updateGridAlpha(int alpha);
 };

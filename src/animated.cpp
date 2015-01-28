@@ -2,85 +2,83 @@
 #include "easing-utils.h"
 
 Animated::Animated() {
-  initAnimated();
-}
-
-void Animated::initAnimated() {
+  // Default variables and events
+  // derived classes call automatically
+  newEvent(0, -1, 0, 0);
+  
   time = 0;
   delay = 0;
-}
-
-void Animated::update() {
-  updateTime();
+  currentEvent = events[0];
 }
 
 void Animated::updateTime() {
-  // Loop if necessary
-  int index = getCurrentEventIndex();
-  if (index >= 0) {
-    animation_event_t e = events[index];
-    if (e.loop && time + 1 >= e.start + e.duration)
-      time = e.start;
+  // Loop or switch events if necessary
+  if (currentEvent.duration != -1 && time + 1 >= currentEvent.duration) {
+    time = 0;
+    updateCurrentEvent();
   }
   
   time += 1;
 }
 
-float Animated::getTime() {
-  return time+delay;
-}
-
-// Return index (for events) which event contains time
-// -1 if no events found
-int Animated::getCurrentEventIndex() {
+void Animated::updateCurrentEvent() {
+  int nextID = currentEvent.nextID;
+  
+  // If loop, don't change currentEvent
+  if (nextID == currentEvent.id)
+    return;
+  
+  // Otherwise find next id
   for (int i = 0; i < events.size(); i++) {
     animation_event_t e = events[i];
-    if (time >= e.start && (time < e.start + e.duration || e.duration == -1))
-      return i;
+    if (e.id == currentEvent.nextID) {
+      currentEvent = e;
+      break;
+    }
   }
-  return -1;
 }
 
-int Animated::getCurrentEventID() {
-  int index = getCurrentEventIndex();
-  
-  // Check if no current event
-  if (index < 0)
-    return index;
-  
-  // Else return ide
-  animation_event_t e = events[index];
-  return e.id;
+float Animated::getTime() {
+  return time+currentEvent.delay;
 }
 
-void Animated::newEvent(float start, float duration, int id, bool loop) {
+void Animated::newEvent(int delay, int duration, int id, int nextID) {
   animation_event_t e = animation_event_t();
-  e.start = start;
+  e.delay = delay;
   e.duration = duration;
   e.id = id;
-  e.loop = loop;
+  e.nextID = nextID;
   events.push_back(e);
 }
 
 void Animated::setEvents(vector<animation_event_t> events_) {
   events = events_;
-  initializeAnimatedItems();
+  currentEvent = events[0];
+  updateDependencyEvents();
 }
 
-void Animated::setDelay(float delay_) {
-  delay = delay_;
-  initializeAnimatedItems();
+void Animated::updateDependencyEvents() {
 }
 
-float Animated::getDelay() {
-  return delay;
+void Animated::setDelay(int delay_) {
+  // By default update event0's delay, assumed to be intro
+  events[0].delay = delay_;
+  currentEvent = events[0];
+  updateDependencyDelays(delay_);
 }
 
-void Animated::initializeAnimatedItems() {
+int Animated::getDelay() {
+  // By default return event0's delay
+  return events[0].delay;
+}
+
+void Animated::updateDependencyDelays(int delay_) {
 }
 
 //
+//
 // ANIMATED TICK LINE
+//
 //
 AnimatedTickLine::AnimatedTickLine() {
   x = 0;
@@ -91,22 +89,21 @@ AnimatedTickLine::AnimatedTickLine() {
   color = COLOR_LINE;
   alpha = 255;
   
-  initAnimated();
-  newEvent(0, 300, 0, true); // intro
-  newEvent(300, -1, 1, false); // main
+  newEvent(0, 300, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
 }
 
 void AnimatedTickLine::draw() {
   updateTime();
   
-  if (getCurrentEventID() == 0 && getTime() > 0) {
+  if (currentEvent.id == 0 && getTime() > 0) {
     // Intro
     float temp_width = easeInOut(getTime(), 0, w, duration);
     float centerX = x+(w-temp_width)/2;
     ofSetColor(color, alpha);
     tick_line(centerX, centerX+temp_width, y);
     drawExtraTicks(temp_width, centerX);
-  } else if (getCurrentEventID() == 1) {
+  } else if (currentEvent.id == 1) {
     // Main
     ofSetColor(color, alpha);
     tick_line(x, x+w, y);
@@ -134,8 +131,10 @@ AnimatedTickLine newTickLine(float x, float y, float w, float dur, float delay, 
 }
 
 //
+//
 // ANIMATED TEXT
 //
+///
 AnimatedText::AnimatedText() {
   x = 0;
   y = 0;
@@ -145,20 +144,22 @@ AnimatedText::AnimatedText() {
   color = COLOR_LINE;
   fromRight = false;
   
-  initAnimated();
-  newEvent(0, 300, 0, true); // intro
-  newEvent(300, -1, 1, false); // main
+  newEvent(0, 300, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
 }
 
 void AnimatedText::draw() {
   updateTime();
   
-  if (getCurrentEventID() == 0 && getTime() > 0) {
+  if (getTime() < 0)
+    return;
+  
+  if (currentEvent.id == 0) {
     // Intro
     float alpha = 255*flicker(getTime(), duration, rate);
     ofSetColor(color, alpha);
     drawString();
-  } else if (getCurrentEventID() == 1) {
+  } else{
     // Main
     ofSetColor(color, 255);
     drawString();

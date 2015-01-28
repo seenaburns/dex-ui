@@ -2,12 +2,10 @@
  
  left.h
  
- Left side column of UI utils.
- This class is a wrapper for the individual elements, and makes them act as a 
- single unit.
+ Left panel of UI utils.
+ Manages timeDisplay, boxVisualization, graphs, and two header objects.
  
  */
-
 #pragma once
 #include "ofMain.h"
 #include "header.h"
@@ -17,22 +15,20 @@
 #include "noiseVisualization.h"
 #include "animated.h"
 
-
 class Left : public Animated {
   
 public:
   Left();
-  void update();
   void draw();
   void setPos(float x_, float y_);
-  void setDelay(float delay_);
   
   float x;
   float y;
   float w;
   float h;
   
-  void initializeAnimatedItems();
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
   Header header;
   TimeDisplay timeDisplay;
@@ -45,6 +41,4 @@ private:
   Header footer;
   
   float footer_len;
-  
-  float delay;
 };

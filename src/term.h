@@ -2,7 +2,7 @@
  
  term.h
  
- Term wrapper with header
+ Draws the center terminal frame with the header
  
  */
 
@@ -11,7 +11,6 @@
 #include "header.h"
 #include "text.h"
 #include "animated.h"
-
 
 class Term : public Animated {
   
@@ -30,10 +29,10 @@ public:
   float t;
   
   void setPos(float x_, float y_);
-  void setTextSize(int size);
   
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
   Header header;
   ofImage noiseBG;
-  Text termFont;
 };

@@ -2,7 +2,7 @@
  
  right.h
  
- Right side column of UI utils.
+ Right panel of UI utils.
  
  */
 
@@ -25,21 +25,16 @@ public:
   float h;
   
   void setPos(float x_, float y_);
-  void initializeAnimatedItems();
+  
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
+  vector<AnimatedText> texts;
   Header header;
   RadarContainer radar;
   SpikeGraph sg;
   Header footer;
   
-  int footer_len;
-  float errorDelay;
-  
   AnimatedTickLine tline1;
   AnimatedTickLine tline2;
-  vector<AnimatedText> texts;
-  
-  Text font5;
-  
-  void initializeTexts();
 };

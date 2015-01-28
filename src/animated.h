@@ -5,10 +5,10 @@
 #include "text.h"
 
 struct animation_event_t {
-  float start;
-  float duration; // -1 if inf
+  int delay;
+  int duration; // -1 if inf
   int id;
-  bool loop;
+  int nextID; // loop by setting to self
 };
 
 class Animated {
@@ -17,22 +17,24 @@ public:
   void update();
   void updateTime();
   float getTime();
-  int getCurrentEventIndex();
-  int getCurrentEventID();
   
-  void newEvent(float start, float duration, int id, bool loop);
-  virtual void initializeAnimatedItems();
+  void newEvent(int delay, int duration, int id, int nextID);
+  
   void setEvents(vector<animation_event_t> events_);
+  virtual void updateDependencyEvents();
   
-  void setDelay(float delay_);
-  float getDelay();
+  void setDelay(int delay_);
+  int getDelay();
+  virtual void updateDependencyDelays(int delay_);
   
-  void initAnimated();
-protected:
+  int currentEventIndex;
+  animation_event_t currentEvent;
+  
   vector<animation_event_t> events;
-  
+protected:
   float time;
   float delay;
+  void updateCurrentEvent();
 };
 
 class AnimatedTickLine : public Animated {

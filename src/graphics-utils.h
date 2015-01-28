@@ -33,5 +33,7 @@
 #define TERMINAL_FONT_LINUX ""
 #define TERMINAL_FONT TERMINAL_FONT_LINUX
 
+#define NOISE_BG "images/noise-bg-color-darker.png"
+
 void tick_line(float x1, float x2, float y);
 void tick(float x, float y);

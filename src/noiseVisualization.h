@@ -2,7 +2,8 @@
  
  noiseVisualization.h
  
- Noise visualization on bottom left side
+ Noise visualization on bottom left panel
+ Dots are generated from 2D Perlin noise
  
  */
 
@@ -18,10 +19,9 @@ public:
   NoiseVisualization();
   void update();
   void draw();
-  void drawNoise(bool showHighlights);
+  void drawNoise();
   
   void setPos(float x_, float y_);
-  void setDelay(float delay_);
   
   float x;
   float y;
@@ -37,20 +37,13 @@ public:
   float texh;
   ofShader noiseShader;
   ofImage displacementTexture;
-  
-  int hi_count;
-  std::vector<ofPoint> highlights;
-  
+
+  void updateDependencyEvents();
+  void updateDependencyDelays(int delay_);
 private:
-  Text font5;
-  
-  float delay;
   AnimatedTickLine tline1;
   AnimatedTickLine tline2;
   vector<AnimatedText> texts;
-  void initializeText();
   
   void initTexture(int descalar);
-  void selectHighlights();
-  bool invalidHighlight(int i);
 };

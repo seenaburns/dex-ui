@@ -8,18 +8,9 @@ BoxVisualization::BoxVisualization() {
   w = 240;
   h = 11*GRID_SIZE;
   setDelay(0);
-  
-  font5 = Text();
-  font5.setFont(MAIN_FONT, 5);
 
   waves = Waves();
-//   waves.setPos(ofPoint(180,270));
-//  waves.setPos(ofPoint(75,270));
   waves.setPos(ofPoint(285,375));
-  
-  initAnimated();
-  newEvent(0, 300, 0, true); // intro
-  newEvent(0, -1, 1, false); // main
   
   tline1.w = w;
   tline1.duration = 40;
@@ -30,76 +21,8 @@ BoxVisualization::BoxVisualization() {
   tline2.duration = 40;
   tline2.setDelay(0);
   
-  initializeText();
-  initializeAnimatedItems();
-}
-
-void BoxVisualization::draw() {
-  update();
-  ofPushMatrix();
-  {
-    ofTranslate(x, y);
-    
-    int index = getCurrentEventIndex();
-    animation_event_t e = events[index];
-    // if (e.id == 0) {
-      // Intro
-      tline1.draw();
-      tline2.draw();
-      
-      if (time + delay > 0) {
-        waves.camDist = easeOut(time+delay, 20000, 2400, 50);
-        waves.draw();
-      }
-      
-      for (int i = 0; i < texts.size(); i++)
-        texts[i].draw();
-    /*} else if (e.id == 1) {
-      // Main
-      ofSetColor(COLOR_LINE);
-      // Top
-      tick_line(0, w, 0);
-      // Bottom
-      tick_line(0, w, h);
-      
-      ofSetColor(COLOR_135);
-      font5.drawString("SYSTEM INSPECTOR", 5, 7);
-      ofSetColor(COLOR_55);
-      font5.drawStringFromTopRight("INVERSION", w-5, 7);
-      font5.drawStringFromTopRight("SYSTEM INSPECTOR", w-5, h-11);
-      font5.drawStringFromTopRight("LOAD", w-5, h-18);
-      ofSetColor(COLOR_55);
-      font5.drawStringFromTopRight("HIGH", w-23, h-18);
-      
-      ofFill();
-      ofSetColor(COLOR_55);
-      //    ofRect(7, h-27, 2, 23);
-      font5.drawString("INITIALIZING ANALYSIS", 5, h-25);
-      font5.drawString("OF ADVANCED SYSTEM", 5, h-18);
-      font5.drawString("PROCESS INSPECTION", 5, h-11);
-      
-      
-      waves.draw();
-    }*/
-  }
-  ofPopMatrix();
-}
-
-void BoxVisualization::setPos(float x_, float y_) {
-  x = x_;
-  y = y_;
-}
-
-void BoxVisualization::setDelay(float delay_) {
-  delay = delay_;
-  tline1.setDelay(delay);
-  tline2.setDelay(delay-5);
-  initializeText();
-}
-
-void BoxVisualization::initializeText() {
   texts.clear();
-  float textDelay = -55;
+  int textDelay = -55;
   // Top Left
   texts.push_back(newText("SYSTEM SUMMARY", 5,
                           5, 7,
@@ -134,11 +57,55 @@ void BoxVisualization::initializeText() {
                           10, delay+textDelay-15,
                           COLOR_55,
                           false));
-
-  initializeAnimatedItems();
+  
+  // Animation settings
+  events.clear();
+  newEvent(0, 300, 0, 1); // intro
+  newEvent(0, -1, 1, 1); // main
+  currentEvent = events[0];
+  
+  updateDependencyEvents();
+  updateDependencyDelays(getDelay());
 }
 
-void BoxVisualization::initializeAnimatedItems() {
+void BoxVisualization::draw() {
+  updateTime();
+  ofPushMatrix();
+  {
+    ofTranslate(x, y);
+    
+    // Intro
+    tline1.draw();
+    tline2.draw();
+    
+    if (currentEvent.id == 0 && getTime() > 0)
+      waves.camDist = easeOut(getTime(), 20000, 2400, 50);
+    if (getTime() > 0)
+      waves.draw();
+    
+    for (int i = 0; i < texts.size(); i++)
+      texts[i].draw();
+}
+  ofPopMatrix();
+}
+
+void BoxVisualization::setPos(float x_, float y_) {
+  x = x_;
+  y = y_;
+}
+
+void BoxVisualization::updateDependencyDelays(int delay_) {
+  delay = delay_;
+  tline1.setDelay(delay);
+  tline2.setDelay(delay-5);
+  
+  int textDelay = -55;
+  int textDelays[6] = {0,-5,-10,-10,-15,-15};
+  for (int i = 0; i < texts.size(); i++)
+    texts[i].setDelay(delay_+textDelay+textDelays[i]);
+}
+
+void BoxVisualization::updateDependencyEvents() {
   tline1.setEvents(events);
   tline2.setEvents(events);
   for (int i = 0; i < texts.size(); i++)
