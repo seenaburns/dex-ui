@@ -12,13 +12,13 @@ Note: Dex UI was designed as an experiment or an art piece, not distributable so
 Q&A
 ---
 
-**What's Happening in the Video Demo**
+**What's Happening in the [Video Demo](https://vimeo.com/117199764)?**
 
 Real desktops revolve around windows, but most sci fi interfaces have these integrated desktops with all sort of animations and no apparent windows. Dex UI aimed to create the illusion of a desktop environment without windows while in reality still operating with windows (in X Windowing System).
 
 To do this, the interface is a single openFrameworks program that handles all the animations. By modifying BSPWM I added a window mode to allow the interface to sit fullscreen beneath any other window. After the introduction animation occurs, a terminal (URXVT) is created above the interface and its size is constrained to the outline drawn in the interface. In short it is two layered windows, but because the windows have no borders or shadows, visually this looks like one integrated interface.
 
-**How do I run Dex UI**
+**How do I run Dex UI?**
 
 The code here is for an [openFrameworks](http://www.openframeworks.cc/) project. The first step is to get openFrameworks, and get the graphics examples running to confirm it's really working. Then you can start a new project and add the files. Beyond that, fonts and images are not included here, which may be problematic as all of the type work is hard coded.
 
