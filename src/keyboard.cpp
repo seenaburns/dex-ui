@@ -351,7 +351,7 @@ void Keyboard::draw() {
     // ofDrawBitmapString(ofToString(time), 0,-20);
     
     int key = 1; 
-    while (key >= 0) {
+    if (key >= 0) {
       key = kd.readKeyReleased();
       if (key > 0) {
         // cout << key << endl;
