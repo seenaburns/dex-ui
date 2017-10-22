@@ -3,7 +3,7 @@ DEX UI
 
 ![DEX UI Full Screenshot](http://i.imgur.com/2rjIbFa.png)
 
-*DEX UI is a handcrafted interface programmed in openFrameworks, running fullscreen underneath a functioning terminal, giving the experience of having a sci fi computer.* [More.](http://nnkd.org/dexui/)
+*DEX UI is a handcrafted interface programmed in openFrameworks, running fullscreen underneath a functioning terminal, giving the experience of having a sci-fi computer.* [More.](http://nnkd.org/dexui/)
 
 The project's source code is hosted here for reference. Included are the openFrameworks project source files and shaders, as well as the changes I made to BSPWM (more below). Not included are things like fonts and images.
 
@@ -14,9 +14,9 @@ Q&A
 
 **What's Happening in the Video Demo**
 
-Real desktops revolve around windows, but most sci fi interfaces have these integrated desktops with all sort of animations and no apparent windows. Dex UI aimed to create the illusion of a desktop environment without windows while in reality still operating with windows (in X Windowing System).
+Real desktops revolve around windows, but most sci-fi interfaces have these integrated desktops with all sort of animations and no apparent windows. Dex UI aimed to create the illusion of a desktop environment without windows while in reality still operating with windows (in X Windowing System).
 
-To do this, the interface is a single openFrameworks program that handles all the animations. By modifying BSPWM I added a window mode to allow the interface to sit fullscreen beneath any other window. After the introduction animation occurs, a terminal (URXVT) is created above the interface and its size is constrained to the outline drawn in the interface. In short it is two layered windows, but because the windows have no borders or shadows, visually this looks like one integrated interface.
+To do this, the interface is a single openFrameworks program that handles all the animations. By modifying BSPWM, I added a window mode to allow the interface to sit fullscreen beneath any other window. After the introduction animation occurs, a terminal (URXVT) is created above the interface and its size is constrained to the outline drawn in the interface. In short it is two layered windows, but because the windows have no borders or shadows, visually this looks like one integrated interface.
 
 **How do I run Dex UI**
 
@@ -24,7 +24,7 @@ The code here is for an [openFrameworks](http://www.openframeworks.cc/) project.
 
 **How I contribute?**
 
-This project is here for reference and not in active development, so it is very unlikely I will continue to make changes, or respond to requests to make changes.
+This project is here for reference and not in active development, so it is very unlikely I will continue to make changes or respond to requests to make changes.
 
 **Why openFrameworks?**
 
